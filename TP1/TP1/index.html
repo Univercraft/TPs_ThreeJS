@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP1 - Three.js - Scène 3D Interactive</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    canvas {
+      display: block;
+    }
+    
+    .info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px 25px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 102, 0, 0.5);
+      max-width: 320px;
+    }
+    
+    .info h1 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #ff6600;
+      text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+    }
+    
+    .info p {
+      margin: 6px 0;
+      opacity: 0.95;
+      line-height: 1.4;
+    }
+    
+    .info .section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .info .section-title {
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    
+    .info kbd {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-family: monospace;
+      font-size: 11px;
+      color: #ffff00;
+    }
+    
+    .lights-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(187, 0, 255, 0.5);
+      max-width: 350px;
+    }
+    
+    .lights-panel h2 {
+      color: #bb00ff;
+      margin-bottom: 15px;
+      font-size: 18px;
+      text-shadow: 0 0 10px rgba(187, 0, 255, 0.5);
+    }
+    
+    .light-item {
+      margin: 10px 0;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s;
+    }
+    
+    .light-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(-3px);
+    }
+    
+    .light-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+    
+    .light-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 12px;
+      display: inline-block;
+      box-shadow: 0 0 10px currentColor;
+    }
+    
+    .light-details {
+      flex: 1;
+    }
+    
+    .light-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+    
+    .light-description {
+      font-size: 11px;
+      color: #aaa;
+      font-style: italic;
+    }
+    
+    .light-toggle {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      transition: all 0.3s;
+      background: rgba(255, 0, 0, 0.3);
+      color: #ff6666;
+      border: 1px solid rgba(255, 0, 0, 0.5);
+      min-width: 50px;
+    }
+    
+    .light-toggle.active {
+      background: rgba(0, 255, 0, 0.3);
+      color: #66ff66;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    
+    .light-toggle:hover {
+      transform: scale(1.05);
+    }
+    
+    .keyboard-hint {
+      font-size: 10px;
+      color: #888;
+      margin-top: 2px;
+    }
+    
+    .keyboard-hint kbd {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 10px;
+    }
+    
+    .all-controls {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      gap: 8px;
+    }
+    
+    .control-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    
+    .control-btn.on {
+      background: rgba(0, 255, 0, 0.3);
+      color: #66ff66;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+    }
+    
+    .control-btn.off {
+      background: rgba(255, 0, 0, 0.3);
+      color: #ff6666;
+      border: 1px solid rgba(255, 0, 0, 0.5);
+    }
+    
+    .control-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="info">
+    <h1>🎨 TP1 - Three.js</h1>
+    <p>📦 Scène 3D avec 6 types de lumières</p>
+    
+    <div class="section">
+      <div class="section-title">⌨️ Contrôles Caméra</div>
+      <p><kbd>←</kbd> <kbd>→</kbd> <kbd>A</kbd> <kbd>D</kbd> Rotation</p>
+      <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>W</kbd> <kbd>S</kbd> Hauteur</p>
+      <p><kbd>SPACE</kbd> Toggle rotation auto</p>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">💡 Contrôles Lumières</div>
+      <p><kbd>1</kbd> à <kbd>6</kbd> Toggle chaque lumière</p>
+      <p>Ou utilisez le panneau à droite →</p>
+    </div>
+  </div>
+  
+  <div class="lights-panel">
+    <h2>💡 Types de lumières Three.js</h2>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: #ffffff;"></span>
+        <div class="light-details">
+          <div class="light-name">Ambient Light</div>
+          <div class="light-description">Éclaire uniformément</div>
+          <div class="keyboard-hint"><kbd>1</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="ambient">ON</button>
+    </div>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: #ffdd00;"></span>
+        <div class="light-details">
+          <div class="light-name">Directional Light</div>
+          <div class="light-description">Comme le soleil</div>
+          <div class="keyboard-hint"><kbd>2</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="directional">ON</button>
+    </div>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: #ffff00; box-shadow: 0 0 15px #ffff00;"></span>
+        <div class="light-details">
+          <div class="light-name">Point Light</div>
+          <div class="light-description">Comme une ampoule</div>
+          <div class="keyboard-hint"><kbd>3</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="point">ON</button>
+    </div>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: #ff6600; box-shadow: 0 0 15px #ff6600;"></span>
+        <div class="light-details">
+          <div class="light-name">Spot Light</div>
+          <div class="light-description">Projecteur avec cône</div>
+          <div class="keyboard-hint"><kbd>4</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="spot">ON</button>
+    </div>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: linear-gradient(180deg, #87ceeb 0%, #2d1b00 100%);"></span>
+        <div class="light-details">
+          <div class="light-name">Hemisphere Light</div>
+          <div class="light-description">Ciel + sol</div>
+          <div class="keyboard-hint"><kbd>5</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="hemisphere">ON</button>
+    </div>
+    
+    <div class="light-item">
+      <div class="light-info">
+        <span class="light-icon" style="background: #00ffff; border-radius: 2px;"></span>
+        <div class="light-details">
+          <div class="light-name">RectArea Light</div>
+          <div class="light-description">Néon, fenêtre</div>
+          <div class="keyboard-hint"><kbd>6</kbd></div>
+        </div>
+      </div>
+      <button class="light-toggle active" data-light="rectArea">ON</button>
+    </div>
+    
+    <div class="all-controls">
+      <button class="control-btn on" onclick="toggleAllLights(true)">🔆 Tout ON</button>
+      <button class="control-btn off" onclick="toggleAllLights(false)">🔅 Tout OFF</button>
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.js"></script>
+  <script>
+    function toggleAllLights(state) {
+      const event = new CustomEvent('toggleAllLights', { detail: state });
+      window.dispatchEvent(event);
+    }
+    
+    window.addEventListener('toggleAllLights', (e) => {
+      const state = e.detail;
+      Object.keys(window.lightsState || {}).forEach(key => {
+        window.lightsState[key] = state;
+      });
+      if (window.updateLightsVisibility) {
+        window.updateLightsVisibility();
+      }
+    });
+  </script>
+</body>
+</html>
